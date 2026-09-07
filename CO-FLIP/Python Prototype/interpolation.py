@@ -21,14 +21,12 @@ def evaluate_b_spline_piece(knot_set, p: int, i: int, t: float):
 
 # Page 17 Section 5.2 (66)
 def evaluate_b_spline(knot_set, p: int, t: float, f):
-    N = knot_set.size - p - 1
-
-    total = 0.0
-
-    for i in range(N):
-        total += f[i] * evaluate_b_spline_piece(knot_set, p, i, t)
-
-    return total
+    # Potential implementation:
+    # 1. Create matrix of time values
+    # 2. Create 2 arrays of knot set values
+    # 3. Somehow run compare operations between them
+    p_0_matrix = 
+    return evaluate_b_spline_piece(knot_set, p, t) @ f
 
 # Page 17 Section 5.2 (67)
 def evaluate_b_spline_derivative_piece(knot_set, p: int, i: int, t: float):
@@ -148,20 +146,20 @@ def main():
     knot_set = generate_knot_set(N, p)
     values = np.linspace(0, 1, graph_resolution)
     magnitudes = []
-    m_magnitudes = []
-    b_d_magnitudes = []
-    m_d_magnitudes = []
+    # m_magnitudes = []
+    # b_d_magnitudes = []
+    # m_d_magnitudes = []
 
     for t in values:
         magnitudes.append(evaluate_b_spline(knot_set, p, t, f))
-        m_magnitudes.append(evaluate_m_spline(knot_set, p, t, f))
-        b_d_magnitudes.append(evaluate_b_spline_derivative(knot_set, p, t, f))
-        m_d_magnitudes.append(evaluate_m_spline_derivative(knot_set, p, t, f))
+        # m_magnitudes.append(evaluate_m_spline(knot_set, p, t, f))
+        # b_d_magnitudes.append(evaluate_b_spline_derivative(knot_set, p, t, f))
+        # m_d_magnitudes.append(evaluate_m_spline_derivative(knot_set, p, t, f))
 
     plt.plot(values, np.array(magnitudes), '-', label="B-Spline")
-    plt.plot(values, np.array(m_magnitudes), '-', label="M-Spline")
-    plt.plot(values, np.array(b_d_magnitudes), '-', label="B-Spline Derivative")
-    plt.plot(values, np.array(m_d_magnitudes), '-', label="M-Spline Derivative")
+    # plt.plot(values, np.array(m_magnitudes), '-', label="M-Spline")
+    # plt.plot(values, np.array(b_d_magnitudes), '-', label="B-Spline Derivative")
+    # plt.plot(values, np.array(m_d_magnitudes), '-', label="M-Spline Derivative")
     plt.plot(np.linspace(0, 1, N), f, '.')
     plt.legend()
     plt.show()
