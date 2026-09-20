@@ -5,20 +5,24 @@ import matplotlib.pyplot as plt
 # Page 17 Section 5.2 (64)
 def evaluate_b_spline_piece(knot_set, p: int, t):
     if p == 0:
+        # TODO: Remove constant matrices and add them to inputs for optimization
         N = knot_set.size - p - 1
         knotrows = knot_set[:-1, np.newaxis] * np.ones(t.size)
         knotrows_one = knot_set[1:, np.newaxis] * np.ones(t.size)
-        timerows = t[:, np.newaxis] * np.ones()
+        timerows = np.ones(knot_set.size - 1)[:, np.newaxis] * t
 
         return np.equal(
             np.greater_equal(timerows, knotrows),
             np.less(timerows, knotrows_one)
         ).astype(np.float64)
 
-    # first_term = 0.0
-    # second_term = 0.0
+    b_spline_lower = evaluate_b_spline_piece(knot_set, p - 1, t)
 
-    # b_spline_lower = evaluate_b_spline_piece(knot_set, p - 1, t)
+    first_term = np.zeros((np.size(b_spline_lower, 0), np.size(b_spline_lower, 1) - 1))
+    second_term = np.zeros((np.size(b_spline_lower, 0), np.size(b_spline_lower, 1) - 1))
+
+    # Hope the range is correct :/
+    first_term[1:, :] = 
 
     # if knot_set[i + p] != knot_set[i]:
     #     first_term = (t - knot_set[i]) / (
@@ -35,7 +39,7 @@ def evaluate_b_spline(knot_set, p: int, t: float, f):
     # 1. Create matrix of time values
     # 2. Create 2 arrays of knot set values (to deal with generation of p = 0 matrix)
     # 3. Somehow run compare operations between them
-    return evaluate_b_spline_piece(knot_set, p, t) @ f
+    return np.sum(evaluate_b_spline_piece(knot_set, p, t), 0)
 
 # Page 17 Section 5.2 (67)
 def evaluate_b_spline_derivative_piece(knot_set, p: int, i: int, t: float):
