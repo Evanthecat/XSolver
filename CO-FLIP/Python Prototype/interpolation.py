@@ -22,27 +22,35 @@ def evaluate_b_spline_piece(knot_set, p: int, N: int, t):
     first_term = np.zeros((np.size(b_spline_lower, 0), np.size(b_spline_lower, 1) - 1))
     second_term = np.zeros((np.size(b_spline_lower, 0), np.size(b_spline_lower, 1) - 1))
 
-    # Hope the range is correct :/
-    # Maybe edit to use only one cut up matrix for optimization later
     knotrows = np.ones(t.size)[:, np.newaxis] * knot_set[:N + p_full - p]
     knotrows_one = np.ones(t.size)[:, np.newaxis] * knot_set[1:N + p_full - p + 1]
     knotrows_p = np.ones(t.size)[:, np.newaxis] * knot_set[p:N + p_full]
     knotrows_p_one = np.ones(t.size)[:, np.newaxis] * knot_set[p + 1:N + p_full + 1]
 
-    first_term[:, p:] = (timerows[:, p:] - knotrows[:, p:]) / (knotrows_p[:, p:] - knotrows[:, p:]) * b_spline_lower[:, p:-1]
-    second_term[:, :-p] = (1 - (timerows[:, :-p] - knotrows_one[:, :-p]) / (knotrows_p_one[:, :-p] - knotrows_one[:, :-p])
-        ) * b_spline_lower[:, 1:-p]
+    subtracted_amount = p_full - p + 1
+
+    if p_full > p:
+        first_term[:, subtracted_amount:-subtracted_amount + 1] = (
+            timerows[:, subtracted_amount:-subtracted_amount + 1] - knotrows[:, subtracted_amount:-subtracted_amount + 1]
+        ) / (
+            knotrows_p[:, subtracted_amount:-subtracted_amount + 1] - knotrows[:, subtracted_amount:-subtracted_amount + 1]
+        ) * b_spline_lower[:, subtracted_amount:-subtracted_amount]
+
+        second_term[:, subtracted_amount - 1:-subtracted_amount] = (
+            1 - (timerows[:, subtracted_amount - 1:-subtracted_amount] - knotrows_one[:, subtracted_amount - 1:-subtracted_amount]
+        ) / (
+            knotrows_p_one[:, subtracted_amount - 1:-subtracted_amount] - knotrows_one[:, subtracted_amount - 1:-subtracted_amount]
+        )) * b_spline_lower[:, subtracted_amount:-subtracted_amount]
+    else:
+        first_term[:, 1:] = (timerows[:, 1:] - knotrows[:, 1:]) / (knotrows_p[:, 1:] - knotrows[:, 1:]) * b_spline_lower[:, 1:-1]
+        second_term[:, :-1] = (1 - (timerows[:, :-1] - knotrows_one[:, :-1]) / (knotrows_p_one[:, :-1] - knotrows_one[:, :-1])
+            ) * b_spline_lower[:, 1:-1]
 
     return first_term + second_term
 
 # Page 17 Section 5.2 (66)
 def evaluate_b_spline(knot_set, p: int, N: int, t: float, f):
-    # Potential implementation:
-    # 1. Create matrix of time values
-    # 2. Create 2 arrays of knot set values (to deal with generation of p = 0 matrix)
-    # 3. Somehow run compare operations between them
-    # evaluate_b_spline_piece(knot_set, p, N, t) @ f
-    return evaluate_b_spline_piece(knot_set, p, N, t)
+    return evaluate_b_spline_piece(knot_set, p, N, t) @ f
 
 # Page 17 Section 5.2 (67)
 def evaluate_b_spline_derivative_piece(knot_set, p: int, i: int, t: float):
@@ -143,21 +151,20 @@ def generate_knot_set(N: int, p: int):
     return np.concatenate((np.zeros(p), np.linspace(0, 1, N - p + 1), np.ones(p)))
 
 def main():
-    graph_resolution = 10
-    p = 1
+    graph_resolution = 1000
+    p = 3
     N = 10
     f = np.array([
-        # 0.1392126793708931,
-        # -0.593890798991142,
-        # 0.4321920959540454,
-        # 0.1894696162675895,
-        # -0.4428144308972264,
-        # 0.850453270385332,
-        # 0.37212327998772565,
-        # -0.45597708821691263,
-        # 0.8202207309351939,
-        # 0.5901881972887161,
-        1,1,1,1,1,1,1,1,1,1
+        0.1392126793708931,
+        -0.593890798991142,
+        0.4321920959540454,
+        0.1894696162675895,
+        -0.4428144308972264,
+        0.850453270385332,
+        0.37212327998772565,
+        -0.45597708821691263,
+        0.8202207309351939,
+        0.5901881972887161,
     ])
 
     knot_set = generate_knot_set(N, p)
@@ -168,18 +175,17 @@ def main():
     # m_d_magnitudes = []
 
     magnitudes = evaluate_b_spline(knot_set, p, N, values, f)
-    print(magnitudes)
     # m_magnitudes.append(evaluate_m_spline(knot_set, p, t, f))
     # b_d_magnitudes.append(evaluate_b_spline_derivative(knot_set, p, t, f))
     # m_d_magnitudes.append(evaluate_m_spline_derivative(knot_set, p, t, f))
 
-    # plt.plot(values, np.array(magnitudes), '-', label="B-Spline")
+    plt.plot(values, np.array(magnitudes), '-', label="B-Spline")
     # plt.plot(values, np.array(m_magnitudes), '-', label="M-Spline")
     # plt.plot(values, np.array(b_d_magnitudes), '-', label="B-Spline Derivative")
     # plt.plot(values, np.array(m_d_magnitudes), '-', label="M-Spline Derivative")
-    # plt.plot(np.linspace(0, 1, N), f, '.')
-    # plt.legend()
-    # plt.show()
+    plt.plot(np.linspace(0, 1, N), f, '.')
+    plt.legend()
+    plt.show()
 
 if __name__ == "__main__":
     main()
