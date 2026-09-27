@@ -3,6 +3,7 @@ import matplotlib.pyplot as plt
 
 # TODO: Optimize
 # Page 17 Section 5.2 (64)
+
 def evaluate_b_spline_piece(knot_set, p: int, i: int, t: float):
     if p == 0:
         return 1.0 if knot_set[i] <= t < knot_set[i + 1] else 0.0
@@ -135,7 +136,7 @@ def generate_knot_set(N: int, p: int):
     return np.concatenate((np.zeros(p), np.linspace(0, 1, N - p + 1), np.ones(p)))
 
 def main():
-    p = 3
+    p = 2
     N = 10
     f = np.array([
         1,1,1,1,1,1,1,1,1,1,
