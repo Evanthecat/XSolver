@@ -53,36 +53,27 @@ def evaluate_b_spline(knot_set, p: int, N: int, t: float, f):
     return evaluate_b_spline_piece(knot_set, p, N, t) @ f
 
 # Page 17 Section 5.2 (67)
-def evaluate_b_spline_derivative_piece(knot_set, p: int, i: int, t: float):
-    return evaluate_m_spline_piece(knot_set, p, i, t) - evaluate_m_spline_piece(knot_set, p, i + 1, t)
-
-def evaluate_b_spline_derivative(knot_set, p: int, t: float, f):
-    N = knot_set.size - p - 1
-
-    total = 0.0
-
-    for i in range(N):
-        total += f[i] * evaluate_b_spline_derivative_piece(knot_set, p, i, t)
-
-    return total
+def evaluate_b_spline_derivative(knot_set, p: int, N: int, t: float, f):
+    values_array = np.zeros((t.size, N))
+    piece = evaluate_m_spline_piece(knot_set, p, N, t)
+    values_array[:, :-1] = piece[:, :-1] - piece[:, 1:]
+    
+    return values_array @ f
 
 # Page 17 Section 5.2 (68)
-def evaluate_m_spline_piece(knot_set, p: int, i: int, t: float):
+def evaluate_m_spline_piece(knot_set, p: int, N: int, t: float):
     """Evaluates the ith degree-p M-Spline function at t."""
-    if knot_set[i + p] > knot_set[i]:
-        return p / (knot_set[i + p] - knot_set[i]) * evaluate_b_spline_piece(knot_set, p - 1, i, t)
+    # if knot_set[i + p] > knot_set[i]:
+    knotrows = np.ones(t.size)[:, np.newaxis] * knot_set[:N]
+    knotrows_p = np.ones(t.size)[:, np.newaxis] * knot_set[p:N + p]
+    
+    values_array = np.zeros_like(knotrows)
+    values_array[:, 1:] = p / (knotrows_p[:, 1:] - knotrows[:, 1:]) * evaluate_b_spline_piece(knot_set, p - 1, N, t)[:, 1:-1]
 
-    return 0
+    return values_array
 
-def evaluate_m_spline(knot_set, p: int, t: float, f):
-    N = knot_set.size - p - 1
-
-    total = 0.0
-
-    for i in range(N):
-        total += f[i] * evaluate_m_spline_piece(knot_set, p, i, t)
-
-    return total
+def evaluate_m_spline(knot_set, p: int, N: int, t: float, f):
+    return evaluate_m_spline_piece(knot_set, p, N, t) @ f
 
 def evaluate_m_spline_derivative_piece(knot_set, p: int, i: int, t: float):
     if knot_set[i + p] > knot_set[i]:
@@ -90,15 +81,16 @@ def evaluate_m_spline_derivative_piece(knot_set, p: int, i: int, t: float):
 
     return 0
 
-def evaluate_m_spline_derivative(knot_set, p: int, t: float, f):
-    N = knot_set.size - p - 1
+def evaluate_m_spline_derivative(knot_set, p: int, N: int, t: float, f):
+    values_array = np.zeros((t.size, N))
+    piece = evaluate_m_spline_piece(knot_set, p, N, t)
 
-    total = 0.0
-
-    for i in range(N):
-        total += f[i] * evaluate_m_spline_derivative_piece(knot_set, p, i, t)
-
-    return total
+    knotrows = np.ones(t.size)[:, np.newaxis] * knot_set[:N]
+    knotrows_p = np.ones(t.size)[:, np.newaxis] * knot_set[p:N + p]
+    
+    values_array[:, :-1] = p / (knotrows_p[:, 1:] - knotrows[:, 1:]) * piece[:, :-1] - piece[:, 1:]
+    
+    return values_array @ f
 
 # Page 18 section 5.2 (75)
 def evaluate_2nd_degree_interpolation(
@@ -175,14 +167,14 @@ def main():
     # m_d_magnitudes = []
 
     magnitudes = evaluate_b_spline(knot_set, p, N, values, f)
-    # m_magnitudes.append(evaluate_m_spline(knot_set, p, t, f))
-    # b_d_magnitudes.append(evaluate_b_spline_derivative(knot_set, p, t, f))
-    # m_d_magnitudes.append(evaluate_m_spline_derivative(knot_set, p, t, f))
+    m_magnitudes = evaluate_m_spline(knot_set, p, N, values, f)
+    b_d_magnitudes = evaluate_b_spline_derivative(knot_set, p, N, values, f)
+    m_d_magnitudes = evaluate_m_spline_derivative(knot_set, p, N, values, f)
 
     plt.plot(values, np.array(magnitudes), '-', label="B-Spline")
-    # plt.plot(values, np.array(m_magnitudes), '-', label="M-Spline")
-    # plt.plot(values, np.array(b_d_magnitudes), '-', label="B-Spline Derivative")
-    # plt.plot(values, np.array(m_d_magnitudes), '-', label="M-Spline Derivative")
+    plt.plot(values, np.array(m_magnitudes), '-', label="M-Spline")
+    plt.plot(values, np.array(b_d_magnitudes), '-', label="B-Spline Derivative")
+    plt.plot(values, np.array(m_d_magnitudes), '-', label="M-Spline Derivative")
     plt.plot(np.linspace(0, 1, N), f, '.')
     plt.legend()
     plt.show()
