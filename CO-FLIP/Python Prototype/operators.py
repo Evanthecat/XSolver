@@ -148,141 +148,144 @@ def generate_galerkin_hodge_star(N_x: int, N_y: int, N_z: int, p: int):
             total_z = 0.0
 
             # Maybe needs to be N_x - 1 when m-splines?
-            for index in range(N_x):
-                a = index * 1 / (N_x - 1)
-                b = (index + 1) * 1 / (N_x - 1)
-                
-                sum_x = 0.0
+            b_a_2 = 1 / (N_x - 1) / 2
+            a_b_2 = (2 * np.array(range(N_x)) + 1) / (N_x - 1) / 2
 
-                for node_index in range(n):
-                    sum_x += weights[node_index] * evaluate_b_spline_piece(knot_set_x, p, index_i_x, (b - a) / 2 * nodes[node_index] + (a + b) / 2
-                        ) * evaluate_b_spline_piece(knot_set_x, p, index_j_x, (b - a) / 2 * nodes[node_index] + (a + b) / 2)
+            time_values = ((b_a_2 * np.array(nodes))[:, np.newaxis] + a_b_2).flatten()
+            print(knot_set_x, p, N_x, time_values)
 
-                total_x += (b - a) / 2 * sum_x
-
-            for index in range(N_y):
-                a = index * 1 / (N_y - 1)
-                b = (index + 1) * 1 / (N_y - 1)
-                
-                sum_y = 0.0
-
-                for node_index in range(n):
-                    sum_y += weights[node_index] * evaluate_m_spline_piece(knot_set_y, p, index_i_y + 1, (b - a) / 2 * nodes[node_index] + (a + b) / 2
-                        ) * evaluate_m_spline_piece(knot_set_y, p, index_j_y + 1, (b - a) / 2 * nodes[node_index] + (a + b) / 2)
-
-                total_y += (b - a) / 2 * sum_y
-
-            for index in range(N_z):
-                a = index * 1 / (N_z - 1)
-                b = (index + 1) * 1 / (N_z - 1)
-                
-                sum_z = 0.0
-
-                for node_index in range(n):
-                    sum_z += weights[node_index] * evaluate_m_spline_piece(knot_set_z, p, index_i_z + 1, (b - a) / 2 * nodes[node_index] + (a + b) / 2
-                        ) * evaluate_m_spline_piece(knot_set_z, p, index_j_z + 1, (b - a) / 2 * nodes[node_index] + (a + b) / 2)
-
-                total_z += (b - a) / 2 * sum_z
-
-            galerkin_hodge_star[i][j] = total_x * total_y * total_z
-
-    for i in range(y_block_size):
-        for j in range(y_block_size):
-            print(f"\r[Calculating Inner Product] Y Coefficient: {i + 1}, {j + 1}/{y_block_size}, {y_block_size}", end='', flush=True)
-
-            index_i_x, index_i_y, index_i_z = get_packed_index(i, N_x - 1, N_y, N_z - 1)
-            index_j_x, index_j_y, index_j_z = get_packed_index(j, N_x - 1, N_y, N_z - 1)
-
-            total_x = 0.0
-            total_y = 0.0
-            total_z = 0.0
+            b_spline_piece = evaluate_b_spline_piece(knot_set_x, p, N_x, time_values)
+            print(b_spline_piece)
             
-            for index in range(N_x):
-                a = index * 1 / (N_x - 1)
-                b = (index + 1) * 1 / (N_x - 1)
+            total_x = np.sum(np.array(weights).repeat(N_x) * b_spline_piece[:, index_i_x] * b_spline_piece[:, index_j_x], axis=0)
+
+            total_x *= 1 / (N_x - 1) / 2
+            print(total_x)
+
+            # for index in range(N_y):
+            #     a = index * 1 / (N_y - 1)
+            #     b = (index + 1) * 1 / (N_y - 1)
                 
-                sum_x = 0.0
+            #     sum_y = 0.0
 
-                for node_index in range(n):
-                    sum_x += weights[node_index] * evaluate_m_spline_piece(knot_set_x, p, index_i_x + 1, (b - a) / 2 * nodes[node_index] + (a + b) / 2
-                        ) * evaluate_m_spline_piece(knot_set_x, p, index_j_x + 1, (b - a) / 2 * nodes[node_index] + (a + b) / 2)
+            #     for node_index in range(n):
+            #         sum_y += weights[node_index] * evaluate_m_spline_piece(knot_set_y, p, index_i_y + 1, (b - a) / 2 * nodes[node_index] + (a + b) / 2
+            #             ) * evaluate_m_spline_piece(knot_set_y, p, index_j_y + 1, (b - a) / 2 * nodes[node_index] + (a + b) / 2)
 
-                total_x += (b - a) / 2 * sum_x
+            #     total_y += (b - a) / 2 * sum_y
 
-            for index in range(N_y):
-                a = index * 1 / (N_y - 1)
-                b = (index + 1) * 1 / (N_y - 1)
+            # for index in range(N_z):
+            #     a = index * 1 / (N_z - 1)
+            #     b = (index + 1) * 1 / (N_z - 1)
                 
-                sum_y = 0.0
+            #     sum_z = 0.0
 
-                for node_index in range(n):
-                    sum_y += weights[node_index] * evaluate_b_spline_piece(knot_set_y, p, index_i_y, (b - a) / 2 * nodes[node_index] + (a + b) / 2
-                        ) * evaluate_b_spline_piece(knot_set_y, p, index_j_y, (b - a) / 2 * nodes[node_index] + (a + b) / 2)
+            #     for node_index in range(n):
+            #         sum_z += weights[node_index] * evaluate_m_spline_piece(knot_set_z, p, index_i_z + 1, (b - a) / 2 * nodes[node_index] + (a + b) / 2
+            #             ) * evaluate_m_spline_piece(knot_set_z, p, index_j_z + 1, (b - a) / 2 * nodes[node_index] + (a + b) / 2)
 
-                total_y += (b - a) / 2 * sum_y
+            #     total_z += (b - a) / 2 * sum_z
 
-            for index in range(N_z):
-                a = index * 1 / (N_z - 1)
-                b = (index + 1) * 1 / (N_z - 1)
-                
-                sum_z = 0.0
+            galerkin_hodge_star[i][j] = total_x 
+    """* total_y * total_z""" # Unindented for testing
 
-                for node_index in range(n):
-                    sum_z += weights[node_index] * evaluate_m_spline_piece(knot_set_z, p, index_i_z + 1, (b - a) / 2 * nodes[node_index] + (a + b) / 2
-                        ) * evaluate_m_spline_piece(knot_set_z, p, index_j_z + 1, (b - a) / 2 * nodes[node_index] + (a + b) / 2)
+    # for i in range(y_block_size):
+    #     for j in range(y_block_size):
+    #         print(f"\r[Calculating Inner Product] Y Coefficient: {i + 1}, {j + 1}/{y_block_size}, {y_block_size}", end='', flush=True)
 
-                total_z += (b - a) / 2 * sum_z
+    #         index_i_x, index_i_y, index_i_z = get_packed_index(i, N_x - 1, N_y, N_z - 1)
+    #         index_j_x, index_j_y, index_j_z = get_packed_index(j, N_x - 1, N_y, N_z - 1)
 
-            galerkin_hodge_star[i + x_block_size][j + x_block_size] = total_x * total_y * total_z
-
-    for i in range(z_block_size):
-        for j in range(z_block_size):
-            print(f"\r[Calculating Inner Product] Z Coefficient: {i + 1}, {j + 1}/{z_block_size}, {z_block_size}", end='', flush=True)
-
-            index_i_x, index_i_y, index_i_z = get_packed_index(i, N_x - 1, N_y - 1, N_z)
-            index_j_x, index_j_y, index_j_z = get_packed_index(j, N_x - 1, N_y - 1, N_z)
-
-            total_x = 0.0
-            total_y = 0.0
-            total_z = 0.0
+    #         total_x = 0.0
+    #         total_y = 0.0
+    #         total_z = 0.0
             
-            for index in range(N_x):
-                a = index * 1 / (N_x - 1)
-                b = (index + 1) * 1 / (N_x - 1)
+    #         for index in range(N_x):
+    #             a = index * 1 / (N_x - 1)
+    #             b = (index + 1) * 1 / (N_x - 1)
                 
-                sum_x = 0.0
+    #             sum_x = 0.0
 
-                for node_index in range(n):
-                    sum_x += weights[node_index] * evaluate_m_spline_piece(knot_set_x, p, index_i_x + 1, (b - a) / 2 * nodes[node_index] + (a + b) / 2
-                        ) * evaluate_m_spline_piece(knot_set_x, p, index_j_x + 1, (b - a) / 2 * nodes[node_index] + (a + b) / 2)
+    #             for node_index in range(n):
+    #                 sum_x += weights[node_index] * evaluate_m_spline_piece(knot_set_x, p, index_i_x + 1, (b - a) / 2 * nodes[node_index] + (a + b) / 2
+    #                     ) * evaluate_m_spline_piece(knot_set_x, p, index_j_x + 1, (b - a) / 2 * nodes[node_index] + (a + b) / 2)
 
-                total_x += (b - a) / 2 * sum_x
+    #             total_x += (b - a) / 2 * sum_x
 
-            for index in range(N_y):
-                a = index * 1 / (N_y - 1)
-                b = (index + 1) * 1 / (N_y - 1)
+    #         for index in range(N_y):
+    #             a = index * 1 / (N_y - 1)
+    #             b = (index + 1) * 1 / (N_y - 1)
                 
-                sum_y = 0.0
+    #             sum_y = 0.0
 
-                for node_index in range(n):
-                    sum_y += weights[node_index] * evaluate_m_spline_piece(knot_set_y, p, index_i_y + 1, (b - a) / 2 * nodes[node_index] + (a + b) / 2
-                        ) * evaluate_m_spline_piece(knot_set_y, p, index_j_y + 1, (b - a) / 2 * nodes[node_index] + (a + b) / 2)
+    #             for node_index in range(n):
+    #                 sum_y += weights[node_index] * evaluate_b_spline_piece(knot_set_y, p, index_i_y, (b - a) / 2 * nodes[node_index] + (a + b) / 2
+    #                     ) * evaluate_b_spline_piece(knot_set_y, p, index_j_y, (b - a) / 2 * nodes[node_index] + (a + b) / 2)
 
-                total_y += (b - a) / 2 * sum_y
+    #             total_y += (b - a) / 2 * sum_y
 
-            for index in range(N_z):
-                a = index * 1 / (N_z - 1)
-                b = (index + 1) * 1 / (N_z - 1)
+    #         for index in range(N_z):
+    #             a = index * 1 / (N_z - 1)
+    #             b = (index + 1) * 1 / (N_z - 1)
                 
-                sum_z = 0.0
+    #             sum_z = 0.0
 
-                for node_index in range(n):
-                    sum_z += weights[node_index] * evaluate_b_spline_piece(knot_set_z, p, index_i_z, (b - a) / 2 * nodes[node_index] + (a + b) / 2
-                        ) * evaluate_b_spline_piece(knot_set_z, p, index_j_z, (b - a) / 2 * nodes[node_index] + (a + b) / 2)
+    #             for node_index in range(n):
+    #                 sum_z += weights[node_index] * evaluate_m_spline_piece(knot_set_z, p, index_i_z + 1, (b - a) / 2 * nodes[node_index] + (a + b) / 2
+    #                     ) * evaluate_m_spline_piece(knot_set_z, p, index_j_z + 1, (b - a) / 2 * nodes[node_index] + (a + b) / 2)
 
-                total_z += (b - a) / 2 * sum_z
+    #             total_z += (b - a) / 2 * sum_z
 
-            galerkin_hodge_star[i + x_block_size + y_block_size][j + x_block_size + y_block_size] = total_x * total_y * total_z
+    #         galerkin_hodge_star[i + x_block_size][j + x_block_size] = total_x * total_y * total_z
+
+    # for i in range(z_block_size):
+    #     for j in range(z_block_size):
+    #         print(f"\r[Calculating Inner Product] Z Coefficient: {i + 1}, {j + 1}/{z_block_size}, {z_block_size}", end='', flush=True)
+
+    #         index_i_x, index_i_y, index_i_z = get_packed_index(i, N_x - 1, N_y - 1, N_z)
+    #         index_j_x, index_j_y, index_j_z = get_packed_index(j, N_x - 1, N_y - 1, N_z)
+
+    #         total_x = 0.0
+    #         total_y = 0.0
+    #         total_z = 0.0
+            
+    #         for index in range(N_x):
+    #             a = index * 1 / (N_x - 1)
+    #             b = (index + 1) * 1 / (N_x - 1)
+                
+    #             sum_x = 0.0
+
+    #             for node_index in range(n):
+    #                 sum_x += weights[node_index] * evaluate_m_spline_piece(knot_set_x, p, index_i_x + 1, (b - a) / 2 * nodes[node_index] + (a + b) / 2
+    #                     ) * evaluate_m_spline_piece(knot_set_x, p, index_j_x + 1, (b - a) / 2 * nodes[node_index] + (a + b) / 2)
+
+    #             total_x += (b - a) / 2 * sum_x
+
+    #         for index in range(N_y):
+    #             a = index * 1 / (N_y - 1)
+    #             b = (index + 1) * 1 / (N_y - 1)
+                
+    #             sum_y = 0.0
+
+    #             for node_index in range(n):
+    #                 sum_y += weights[node_index] * evaluate_m_spline_piece(knot_set_y, p, index_i_y + 1, (b - a) / 2 * nodes[node_index] + (a + b) / 2
+    #                     ) * evaluate_m_spline_piece(knot_set_y, p, index_j_y + 1, (b - a) / 2 * nodes[node_index] + (a + b) / 2)
+
+    #             total_y += (b - a) / 2 * sum_y
+
+    #         for index in range(N_z):
+    #             a = index * 1 / (N_z - 1)
+    #             b = (index + 1) * 1 / (N_z - 1)
+                
+    #             sum_z = 0.0
+
+    #             for node_index in range(n):
+    #                 sum_z += weights[node_index] * evaluate_b_spline_piece(knot_set_z, p, index_i_z, (b - a) / 2 * nodes[node_index] + (a + b) / 2
+    #                     ) * evaluate_b_spline_piece(knot_set_z, p, index_j_z, (b - a) / 2 * nodes[node_index] + (a + b) / 2)
+
+    #             total_z += (b - a) / 2 * sum_z
+
+    #         galerkin_hodge_star[i + x_block_size + y_block_size][j + x_block_size + y_block_size] = total_x * total_y * total_z
 
     print()
 
@@ -290,21 +293,21 @@ def generate_galerkin_hodge_star(N_x: int, N_y: int, N_z: int, p: int):
 
 def main():
     # d_0
-    N = 3
-    d_0 = generate_d_0(N, N, N)
+    N = 4
+    # d_0 = generate_d_0(N, N, N)
 
-    plt.figure(figsize=(5, 5))
-    plt.pcolormesh(d_0, cmap="RdYlGn")
-    plt.ylim(54, 0)
-    plt.show()
+    # plt.figure(figsize=(5, 5))
+    # plt.pcolormesh(d_0, cmap="RdYlGn")
+    # plt.ylim(54, 0)
+    # plt.show()
 
     # d_1
-    d_1 = generate_d_1(N, N, N)
+    # d_1 = generate_d_1(N, N, N)
 
-    plt.figure(figsize=(5, 5))
-    plt.pcolormesh(d_1, cmap="RdYlGn")
-    plt.ylim(36, 0)
-    plt.show()
+    # plt.figure(figsize=(5, 5))
+    # plt.pcolormesh(d_1, cmap="RdYlGn")
+    # plt.ylim(36, 0)
+    # plt.show()
 
     # Galerkin-Hodge Star
     galerkin_hodge_star = generate_galerkin_hodge_star(N, N, N, 3)
