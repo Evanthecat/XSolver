@@ -135,7 +135,7 @@ def generate_galerkin_hodge_star(N_x: int, N_y: int, N_z: int, p: int):
 
     print()
     print("Calculating Galerkin Hodge Star")
-
+    
     for i in range(x_block_size):
         for j in range(x_block_size):
             print(f"\r[Calculating Inner Product] X Coefficient: {i + 1}, {j + 1}/{x_block_size}, {x_block_size}", end='', flush=True)
@@ -147,32 +147,33 @@ def generate_galerkin_hodge_star(N_x: int, N_y: int, N_z: int, p: int):
             total_y = 0.0
             total_z = 0.0
 
-            # Maybe needs to be N_x - 1 when m-splines?
+            # Put outside loop later
             b_a_2 = 1 / (N_x - 1) / 2
             a_b_2 = (2 * np.array(range(N_x)) + 1) / (N_x - 1) / 2
-
             time_values = ((b_a_2 * np.array(nodes))[:, np.newaxis] + a_b_2).flatten()
-            print(knot_set_x, p, N_x, time_values)
-
             b_spline_piece = evaluate_b_spline_piece(knot_set_x, p, N_x, time_values)
-            print(b_spline_piece)
-            
+
+            # Maybe optimize eventually by doing a 3d matrix multiplication with SIMD
             total_x = np.sum(np.array(weights).repeat(N_x) * b_spline_piece[:, index_i_x] * b_spline_piece[:, index_j_x], axis=0)
-
             total_x *= 1 / (N_x - 1) / 2
-            print(total_x)
 
-            # for index in range(N_y):
-            #     a = index * 1 / (N_y - 1)
-            #     b = (index + 1) * 1 / (N_y - 1)
-                
-            #     sum_y = 0.0
+            b_a_2 = 1 / (N_y - 1) / 2
+            a_b_2 = (2 * np.array(range(N_y)) + 1) / (N_y - 1) / 2
+            time_values = ((b_a_2 * np.array(nodes))[:, np.newaxis] + a_b_2).flatten()
+            b_spline_piece = evaluate_m_spline_piece(knot_set_y, p, N_y, time_values)
 
-            #     for node_index in range(n):
-            #         sum_y += weights[node_index] * evaluate_m_spline_piece(knot_set_y, p, index_i_y + 1, (b - a) / 2 * nodes[node_index] + (a + b) / 2
-            #             ) * evaluate_m_spline_piece(knot_set_y, p, index_j_y + 1, (b - a) / 2 * nodes[node_index] + (a + b) / 2)
+            # Maybe optimize eventually by doing a 3d matrix multiplication with SIMD
+            total_y = np.sum(np.array(weights).repeat(N_y) * b_spline_piece[:, index_i_y + 1] * b_spline_piece[:, index_j_y + 1], axis=0)
+            total_y *= 1 / (N_y - 1) / 2
 
-            #     total_y += (b - a) / 2 * sum_y
+            b_a_2 = 1 / (N_z - 1) / 2
+            a_b_2 = (2 * np.array(range(N_z)) + 1) / (N_z - 1) / 2
+            time_values = ((b_a_2 * np.array(nodes))[:, np.newaxis] + a_b_2).flatten()
+            b_spline_piece = evaluate_m_spline_piece(knot_set_z, p, N_z, time_values)
+
+            # Maybe optimize eventually by doing a 3d matrix multiplication with SIMD
+            total_z = np.sum(np.array(weights).repeat(N_z) * b_spline_piece[:, index_i_z + 1] * b_spline_piece[:, index_j_z + 1], axis=0)
+            total_z *= 1 / (N_z - 1) / 2
 
             # for index in range(N_z):
             #     a = index * 1 / (N_z - 1)
@@ -186,7 +187,7 @@ def generate_galerkin_hodge_star(N_x: int, N_y: int, N_z: int, p: int):
 
             #     total_z += (b - a) / 2 * sum_z
 
-            galerkin_hodge_star[i][j] = total_x 
+            galerkin_hodge_star[i][j] = total_x * total_y * total_z
     """* total_y * total_z""" # Unindented for testing
 
     # for i in range(y_block_size):
@@ -292,7 +293,7 @@ def generate_galerkin_hodge_star(N_x: int, N_y: int, N_z: int, p: int):
     return galerkin_hodge_star
 
 def main():
-    # d_0
+    # # d_0
     N = 4
     # d_0 = generate_d_0(N, N, N)
 
@@ -301,7 +302,7 @@ def main():
     # plt.ylim(54, 0)
     # plt.show()
 
-    # d_1
+    # # d_1
     # d_1 = generate_d_1(N, N, N)
 
     # plt.figure(figsize=(5, 5))
@@ -313,7 +314,7 @@ def main():
     galerkin_hodge_star = generate_galerkin_hodge_star(N, N, N, 3)
 
     plt.pcolormesh(galerkin_hodge_star, cmap="RdYlGn")
-    plt.ylim(36, 0)
+    plt.ylim(108, 0)
     plt.colorbar()
     plt.show()
 
